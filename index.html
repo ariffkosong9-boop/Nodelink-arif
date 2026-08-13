@@ -181,6 +181,31 @@
   footer{text-align:center;color:var(--text-dim);font-size:11px;padding:26px 16px;border-top:1px solid var(--border);position:relative;z-index:1;}
   .disclaimer{background:var(--bg-elev);border:1px solid var(--border);border-radius:12px;padding:11px 13px;font-size:11.5px;color:var(--text-dim);margin-bottom:16px;line-height:1.5;backdrop-filter:blur(8px);}
 
+  /* ---- wallet ---- */
+  .wallet-card{background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 20%, var(--bg-panel)), color-mix(in srgb, var(--accent2) 20%, var(--bg-panel)));border:1px solid var(--border);border-radius:18px;padding:22px;margin-bottom:16px;position:relative;overflow:hidden;}
+  .wallet-card::after{content:"";position:absolute;top:-40%;right:-20%;width:70%;height:140%;background:radial-gradient(circle,var(--accent),transparent 65%);opacity:.15;}
+  .wallet-card .lbl{font-size:12px;color:var(--text-dim);position:relative;}
+  .wallet-card .amt{font-family:'Space Grotesk',sans-serif;font-size:32px;font-weight:800;margin:4px 0 14px;position:relative;}
+  .wallet-actions{display:flex;gap:8px;position:relative;flex-wrap:wrap;}
+
+  .tx-item{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);}
+  .tx-item:last-child{border-bottom:none;}
+  .tx-item .ico{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;background:var(--bg-elev);}
+  .tx-item .info{flex:1;min-width:0;}
+  .tx-item .info .t{font-size:13px;font-weight:600;}
+  .tx-item .info .m{font-size:11px;color:var(--text-dim);}
+  .tx-amt{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;white-space:nowrap;}
+  .tx-amt.plus{color:var(--success);}
+  .tx-amt.minus{color:var(--danger);}
+
+  .btn.wa{background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;}
+
+  .prod-tile{width:100%;aspect-ratio:1.6/1;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:2px;position:relative;overflow:hidden;}
+  .prod-tile::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 20%, rgba(255,255,255,.25), transparent 60%);}
+
+  .ref-row{display:flex;align-items:center;gap:8px;background:var(--bg-elev);border:1px solid var(--border);border-radius:9px;padding:8px 10px;margin-top:4px;flex-wrap:wrap;}
+  .ref-row .code{font-family:'JetBrains Mono',monospace;color:var(--warm);font-weight:700;font-size:12.5px;}
+
   .review-item{padding:10px 0;border-bottom:1px solid var(--border);}
   .review-item:last-child{border-bottom:none;}
   .review-item .rstars{color:var(--warm);font-size:12px;}
@@ -208,6 +233,7 @@
   <div class="tabs-wrap">
     <nav class="tabs">
       <button data-view="market" class="active">Marketplace</button>
+      <button data-view="wallet">Dompet</button>
       <button data-view="wishlist">Wishlist</button>
       <button data-view="store">Toko Saya</button>
       <button data-view="orders">Pesanan</button>
@@ -251,6 +277,40 @@
     <div class="grid" id="marketGrid"></div>
   </section>
 
+  <!-- ============ DOMPET / WALLET ============ -->
+  <section id="view-wallet" class="view">
+    <div id="walletLoggedOut" class="gate">
+      <div class="icon">💳</div><h3>Belum masuk akun</h3><p>Masuk untuk melihat saldo & transfer.</p>
+      <button class="btn warm block" id="walletOpenAuthBtn">Masuk / Daftar</button>
+    </div>
+    <div id="walletLoggedIn" style="display:none;">
+      <div class="wallet-card">
+        <div class="lbl">Saldo NodeLink</div>
+        <div class="amt" id="walletBalance">Rp0</div>
+        <div class="wallet-actions">
+          <button class="btn small" id="topupBtn">+ Isi saldo (simulasi)</button>
+          <button class="btn ghost small" id="openTransferBtn">Transfer ke pengguna lain</button>
+        </div>
+      </div>
+      <div class="disclaimer">💡 Saldo di sini <b>uang simulasi lokal</b>, bukan uang sungguhan. Tapi transfer antar akun demo & pembayaran pakai saldo ini <b>benar-benar mengubah angka saldo real-time</b> di antara akun-akun di perangkat ini — cocok buat latihan alur dompet digital.</div>
+
+      <div class="panel" id="transferPanel" style="display:none;">
+        <h3>Transfer saldo</h3>
+        <div class="form-row full"><div><label>Email penerima</label><input type="text" id="transferEmail" placeholder="email@penerima.com"></div></div>
+        <div class="form-row">
+          <div><label>Jumlah (Rp)</label><input type="number" id="transferAmount" placeholder="50000"></div>
+          <div><label>Catatan (opsional)</label><input type="text" id="transferNote" placeholder="cth. Bayar utang"></div>
+        </div>
+        <button class="btn warm block" id="submitTransferBtn">Kirim transfer</button>
+      </div>
+
+      <div class="panel">
+        <h3>Riwayat transaksi</h3>
+        <div id="walletTxList"></div>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ WISHLIST ============ -->
   <section id="view-wishlist" class="view">
     <div class="section-title"><h2>Wishlist</h2></div>
@@ -267,7 +327,23 @@
         <div><label>Nama produk</label><input id="pName" placeholder="cth. Voucher Diamond MLBB"></div>
         <div><label>Ikon (emoji)</label><input id="pIcon" placeholder="💎" maxlength="2"></div>
       </div>
-      <div class="form-row full"><div><label>Deskripsi</label><textarea id="pDesc" placeholder="Deskripsi produk..."></textarea></div></div>
+      <div class="form-row full">
+        <div>
+          <label>Deskripsi</label>
+          <textarea id="pDesc" placeholder="Deskripsi produk..."></textarea>
+          <button class="btn ghost small" id="genDescBtn" type="button" style="margin-top:6px;">✨ Bantu tulis deskripsi</button>
+        </div>
+      </div>
+      <div id="descGenBox" style="display:none;background:var(--bg-elev);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;">
+        <label>Pilih gaya & kelebihan produk, lalu klik "Buat teks"</label>
+        <select id="genTone" style="margin-bottom:8px;">
+          <option value="santai">Gaya santai</option>
+          <option value="profesional">Gaya profesional</option>
+          <option value="menjual">Gaya menjual (persuasif)</option>
+        </select>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;" id="genTraits"></div>
+        <button class="btn small" id="applyGenDescBtn" type="button">Buat teks</button>
+      </div>
       <div class="form-row">
         <div><label>Harga (Rp)</label><input id="pPrice" type="number" placeholder="150000"></div>
         <div><label>Stok</label><input id="pStock" type="number" placeholder="10"></div>
@@ -314,6 +390,29 @@
         <div id="profileLevelBadge" style="margin-bottom:8px;"></div>
         <div id="profileVerifyBadge"></div>
       </div>
+
+      <div class="panel">
+        <h3>🔗 Kode affiliate kamu</h3>
+        <p style="color:var(--text-dim);font-size:12.5px;margin:0 0 4px;">Bagikan kode ini — kalau orang beli produk apa pun setelah pakai kodemu, kamu dapat komisi 5% otomatis masuk ke saldo.</p>
+        <div class="ref-row"><span>Kode:</span> <span class="code mono" id="myRefCode">—</span><button class="btn ghost small" id="copyRefBtn" style="margin-left:auto;">Salin</button></div>
+        <div class="hint" id="affiliateEarnings"></div>
+      </div>
+
+      <div class="panel">
+        <h3>💬 Nomor WhatsApp</h3>
+        <p style="color:var(--text-dim);font-size:12.5px;margin:0 0 10px;">Diisi supaya pembeli bisa chat kamu langsung dari halaman produk.</p>
+        <div class="form-row full"><div><input type="text" id="waNumberInput" placeholder="cth. 6281234567890 (kode negara, tanpa +/0 di depan)"></div></div>
+        <button class="btn ghost small" id="saveWaBtn" style="margin-top:8px;">Simpan nomor</button>
+      </div>
+
+      <div class="panel">
+        <h3>🔳 QRIS pembayaran asli</h3>
+        <p style="color:var(--text-dim);font-size:12.5px;margin:0 0 10px;line-height:1.6;">Tempel link gambar QRIS asli kamu (dari DANA/GoPay/OVO/bank, di-upload ke <span class="mono" style="color:var(--accent);">imgur.com</span> dulu). Kalau diisi, pembeli akan lihat QR ASLI ini saat checkout — bukan QR simulasi.</p>
+        <div class="form-row full"><div><input type="text" id="qrisUrlInput" placeholder="https://i.imgur.com/xxxxx.jpg"></div></div>
+        <button class="btn ghost small" id="saveQrisBtn" style="margin-top:8px;">Simpan QRIS</button>
+        <div class="hint">⚠️ QR ini statis (nominal tidak otomatis) — pembeli scan lalu ketik sendiri nominalnya, dan tetap perlu tap "sudah bayar" secara manual. Uang benar-benar masuk ke akun DANA/GoPay/bank kamu, tapi konfirmasi di web ini masih manual (self-report).</div>
+      </div>
+
       <div class="panel">
         <h3>Verifikasi toko</h3>
         <p style="color:var(--text-dim);font-size:12.5px;margin:0 0 12px;">Toko terverifikasi tampil dengan lencana ✓, meningkatkan kepercayaan pembeli.</p>
@@ -437,12 +536,19 @@ let currentUserId = LS.get("nlm2_session", null);
 
 if(!users){
   users = [
-    {id:"seed-u1", name:"Toko Jaringan Arif", email:"seller1@demo.com", password:"demo1234", verified:true, verifyStatus:"approved", createdAt: Date.now()-1000*60*60*24*20},
-    {id:"seed-u2", name:"Warung Diamond", email:"seller2@demo.com", password:"demo1234", verified:false, verifyStatus:"none", createdAt: Date.now()-1000*60*60*24*10},
-    {id:"seed-u3", name:"Budi Santoso", email:"budi@demo.com", password:"demo1234", verified:false, verifyStatus:"none", createdAt: Date.now()-1000*60*60*24*5}
+    {id:"seed-u1", name:"Toko Jaringan Arif", email:"seller1@demo.com", password:"demo1234", verified:true, verifyStatus:"approved", createdAt: Date.now()-1000*60*60*24*20, balance:750000, refCode:"arif-net", whatsapp:"6281234567890"},
+    {id:"seed-u2", name:"Warung Diamond", email:"seller2@demo.com", password:"demo1234", verified:false, verifyStatus:"none", createdAt: Date.now()-1000*60*60*24*10, balance:200000, refCode:"warungdiamond", whatsapp:""},
+    {id:"seed-u3", name:"Budi Santoso", email:"budi@demo.com", password:"demo1234", verified:false, verifyStatus:"none", createdAt: Date.now()-1000*60*60*24*5, balance:100000, refCode:"budi-santoso", whatsapp:""}
   ];
   LS.set("nlm2_users", users);
 }
+let walletTx = LS.get("nlm2_wallet_tx", []);
+// capture ?ref= from URL for affiliate attribution
+(function captureRef(){
+  const params = new URLSearchParams(window.location.search);
+  const r = params.get("ref");
+  if(r) sessionStorage.setItem("nlm2_active_ref", r);
+})();
 if(!products){
   products = [
     {id:"seed-p1", sellerId:"seed-u1", name:"Router MikroTik hEX", icon:"📡", desc:"Router entry-level, cocok untuk lab MTCNA & kantor kecil.", price:850000, stock:5, createdAt:Date.now()-1000*60*60*24*9},
@@ -465,7 +571,32 @@ if(orders.length===0){
   LS.set("nlm2_orders", orders); LS.set("nlm2_reviews", reviews);
 }
 
-function saveAll(){ LS.set("nlm2_users",users); LS.set("nlm2_products",products); LS.set("nlm2_orders",orders); LS.set("nlm2_notifications",notifications); LS.set("nlm2_reviews",reviews); LS.set("nlm2_wishlist",wishlist); }
+function saveAll(){ LS.set("nlm2_users",users); LS.set("nlm2_products",products); LS.set("nlm2_orders",orders); LS.set("nlm2_notifications",notifications); LS.set("nlm2_reviews",reviews); LS.set("nlm2_wishlist",wishlist); LS.set("nlm2_wallet_tx",walletTx); }
+
+/* ============ wallet ============ */
+function addWalletTx(userId, type, amount, counterpart, note){
+  walletTx.unshift({id:uid("tx"), userId, type, amount, counterpart, note: note||"", createdAt: Date.now()});
+  LS.set("nlm2_wallet_tx", walletTx);
+}
+function creditBalance(userId, amount){ const u=users.find(x=>x.id===userId); if(u) u.balance=(u.balance||0)+amount; }
+function debitBalance(userId, amount){ const u=users.find(x=>x.id===userId); if(u) u.balance=Math.max(0,(u.balance||0)-amount); }
+function payWithWallet(buyer, seller, amount, note){
+  if((buyer.balance||0) < amount) return false;
+  debitBalance(buyer.id, amount); creditBalance(seller.id, amount);
+  addWalletTx(buyer.id, "purchase", amount, seller.name, note);
+  addWalletTx(seller.id, "sale", amount, buyer.name, note);
+  return true;
+}
+function tryAffiliateCommission(order, product){
+  const refCode = sessionStorage.getItem("nlm2_active_ref");
+  if(!refCode) return;
+  const referrer = users.find(u=>u.refCode===refCode);
+  if(!referrer || referrer.id===order.buyerId || referrer.id===order.sellerId) return;
+  const commission = Math.round(product.price * 0.05);
+  creditBalance(referrer.id, commission);
+  addWalletTx(referrer.id, "affiliate_commission", commission, product.name, "Komisi affiliate 5%");
+  notifyUser(referrer.id, "Komisi affiliate masuk 💸", `Kamu dapat komisi ${rupiah(commission)} dari penjualan "${product.name}" lewat link affiliatemu.`, "payment");
+}
 function currentUser(){ return users.find(u=>u.id===currentUserId) || null; }
 function pushNotif(userId,title,body,kind){ notifications.push({id:uid("n"),userId,title,body,kind:kind||"info",read:false,createdAt:Date.now()}); LS.set("nlm2_notifications",notifications); }
 
@@ -608,7 +739,8 @@ document.getElementById("doRegisterBtn").addEventListener("click", ()=>{
   const pass=document.getElementById("regPass").value;
   if(!name||!email||pass.length<4){ toast("Lengkapi semua field, password min 4 karakter"); return; }
   if(users.some(u=>u.email.toLowerCase()===email)){ toast("Email sudah terdaftar"); return; }
-  const u={id:uid("u"),name,email,password:pass,verified:false,verifyStatus:"none",createdAt:Date.now()};
+  const refSlug = name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"") || "user";
+  const u={id:uid("u"),name,email,password:pass,verified:false,verifyStatus:"none",createdAt:Date.now(),balance:0,refCode:refSlug+"-"+Math.floor(Math.random()*900+100),whatsapp:""};
   users.push(u); currentUserId=u.id; LS.set("nlm2_session",currentUserId); saveAll();
   notifyUser(u.id,"Akun berhasil dibuat","Selamat datang di NodeLink Marketplace, "+name+"!","welcome");
   authOverlay.classList.add("hidden"); toast("Akun dibuat, langsung masuk"); renderAll();
@@ -690,10 +822,15 @@ function productCardHtml(p){
   const rating = productRating(p.id);
   const u = currentUser();
   const wished = u ? isWished(u.id,p.id) : false;
+  const gradients = ["linear-gradient(135deg,#22D3EE,#0E7490)","linear-gradient(135deg,#A78BFA,#6D28D9)","linear-gradient(135deg,#F59E0B,#B45309)","linear-gradient(135deg,#34D399,#047857)","linear-gradient(135deg,#F87171,#B91C1C)"];
+  const grad = gradients[Math.abs(p.id.split("").reduce((a,c)=>a+c.charCodeAt(0),0)) % gradients.length];
+  const myRef = u ? u.refCode : null;
+  const affLink = myRef ? `?product=${p.id}&ref=${myRef}` : "";
   return `
   <div class="card">
-    <div class="card-top">
-      <div class="icon">${p.icon||"🔗"}</div>
+    <div class="prod-tile" style="background:${grad};">${p.icon||"🔗"}</div>
+    <div class="card-top" style="margin-top:2px;">
+      <span></span>
       <button class="heart-btn ${wished?'active':''}" data-wish="${p.id}">${wished?'❤':'🤍'}</button>
     </div>
     <h3 data-view-prod="${p.id}" style="cursor:pointer;">${escapeHtml(p.name)}</h3>
@@ -703,11 +840,29 @@ function productCardHtml(p){
     <div class="price">${rupiah(p.price)}</div>
     <div class="stock">Stok: ${p.stock}</div>
     <button class="btn warm" data-buy="${p.id}" ${p.stock<=0?"disabled":""}>${p.stock<=0?"Stok habis":"Beli sekarang"}</button>
+    <div style="display:flex;gap:6px;">
+      ${seller&&seller.whatsapp ? `<button class="btn wa small" style="flex:1;" data-wa="${p.id}">💬 Chat</button>` : ""}
+      ${u ? `<button class="btn ghost small" style="flex:1;" data-share="${p.id}">📤 Bagikan</button>` : ""}
+    </div>
+    ${myRef && seller && seller.id!==u.id ? `<div class="hint" style="margin-top:0;">Kode affiliate aktif: <b class="mono" style="color:var(--warm);">${myRef}</b></div>` : ""}
   </div>`;
 }
 function bindCardEvents(scopeEl){
   scopeEl.querySelectorAll("[data-buy]").forEach(btn=>btn.addEventListener("click", ()=>openCheckout(btn.getAttribute("data-buy"))));
   scopeEl.querySelectorAll("[data-wish]").forEach(btn=>btn.addEventListener("click", (e)=>{ e.stopPropagation(); toggleWish(btn.getAttribute("data-wish")); }));
+  scopeEl.querySelectorAll("[data-wa]").forEach(btn=>btn.addEventListener("click", (e)=>{
+    e.stopPropagation();
+    const p = products.find(x=>x.id===btn.getAttribute("data-wa")); const seller = users.find(x=>x.id===p.sellerId);
+    if(!seller.whatsapp){ toast("Penjual belum menambahkan nomor WhatsApp"); return; }
+    window.open(waLink(seller.whatsapp, `Halo ${seller.name}, saya tertarik dengan produk "${p.name}" (${rupiah(p.price)}) di NodeLink Marketplace. Masih tersedia?`), "_blank");
+  }));
+  scopeEl.querySelectorAll("[data-share]").forEach(btn=>btn.addEventListener("click", (e)=>{
+    e.stopPropagation();
+    if(!requireLogin()) return;
+    const p = products.find(x=>x.id===btn.getAttribute("data-share")); const u = currentUser();
+    const msg = `Cek produk ini di NodeLink Marketplace: "${p.name}" seharga ${rupiah(p.price)}!\n\nPakai kode affiliate saya saat checkout: ${u.refCode}\n(Catatan: link otomatis hanya aktif kalau aplikasi ini sudah di-hosting online.)`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+  }));
   scopeEl.querySelectorAll("[data-view-prod]").forEach(el=>el.addEventListener("click", ()=>openProductDetail(el.getAttribute("data-view-prod"))));
 }
 function renderMarket(){
@@ -771,41 +926,63 @@ document.getElementById("checkoutOverlay").addEventListener("click", e=>{ if(e.t
 function renderCheckoutModal(){
   const body = document.getElementById("checkoutModalBody");
   const p = products.find(x=>x.id===checkoutState.productId); if(!p){ body.innerHTML=""; return; }
-  const methods = [{id:"qris",em:"🔳",label:"QRIS"},{id:"gopay",em:"🟢",label:"GoPay"},{id:"ovo",em:"🟣",label:"OVO"},{id:"dana",em:"🔵",label:"DANA"}];
+  const buyer = currentUser();
+  const methods = [{id:"saldo",em:"💳",label:"Saldo"},{id:"qris",em:"🔳",label:"QRIS"},{id:"gopay",em:"🟢",label:"GoPay"},{id:"ovo",em:"🟣",label:"OVO"},{id:"dana",em:"🔵",label:"DANA"}];
   if(checkoutState.step==="method"){
     body.innerHTML = `
       <h3>Checkout</h3><p>${escapeHtml(p.name)} · <b class="mono">${rupiah(p.price)}</b></p>
       <label>Pilih metode pembayaran</label>
       <div class="method-grid">${methods.map(m=>`<button class="method-btn ${checkoutState.method===m.id?'active':''}" data-method="${m.id}"><span class="em">${m.em}</span>${m.label}</button>`).join("")}</div>
-      <button class="btn warm block" id="proceedPayBtn">Lanjut bayar</button>
-      <div class="hint">Simulasi tampilan pembayaran — tidak ada uang sungguhan yang berpindah.</div>`;
+      ${checkoutState.method==="saldo" ? `<div class="hint">Saldo kamu: <b class="mono">${rupiah(buyer.balance||0)}</b> — dipotong langsung, real-time.</div>` : `<div class="hint">Simulasi tampilan pembayaran — tidak ada uang sungguhan yang berpindah.</div>`}
+      <button class="btn warm block" id="proceedPayBtn" style="margin-top:10px;">Lanjut bayar</button>`;
     body.querySelectorAll("[data-method]").forEach(b=>b.addEventListener("click", ()=>{ checkoutState.method=b.getAttribute("data-method"); renderCheckoutModal(); }));
-    document.getElementById("proceedPayBtn").addEventListener("click", ()=>{ checkoutState.step="pay"; renderCheckoutModal(); });
+    document.getElementById("proceedPayBtn").addEventListener("click", ()=>{
+      if(checkoutState.method==="saldo"){
+        if((buyer.balance||0) < p.price){ toast("Saldo tidak cukup, isi saldo dulu di tab Dompet"); return; }
+        finalizeOrder(p, "saldo", uid("o"));
+        return;
+      }
+      checkoutState.step="pay"; renderCheckoutModal();
+    });
   } else if(checkoutState.step==="pay"){
     const orderId = uid("o"); checkoutState.orderId = orderId;
+    const seller = users.find(x=>x.id===p.sellerId);
+    const hasRealQris = checkoutState.method==="qris" && seller && seller.qrisUrl;
     const payload = encodeURIComponent(`NODELINK-DEMO|order=${orderId}|item=${p.name}|total=${p.price}|method=${checkoutState.method}`);
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${payload}`;
+    const qrUrl = hasRealQris ? seller.qrisUrl : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${payload}`;
     const methodLabel = methods.find(m=>m.id===checkoutState.method).label;
     body.innerHTML = `
       <h3>Scan untuk bayar (${methodLabel})</h3><p>Total: <b class="mono">${rupiah(p.price)}</b></p>
-      <div class="qr-box"><img src="${qrUrl}" alt="QR pembayaran simulasi"></div>
-      <div class="hint">QR ini berisi data simulasi demo, bukan kode pembayaran resmi bank/e-wallet.</div>
-      <button class="btn warm block" id="confirmPayBtn" style="margin-top:12px;">Saya sudah bayar (simulasi)</button>
+      <div class="qr-box"><img src="${qrUrl}" alt="QR pembayaran"></div>
+      ${hasRealQris
+        ? `<div class="hint" style="color:var(--success);">✅ Ini QRIS ASLI milik ${escapeHtml(seller.name)}. Scan pakai e-wallet/m-banking, lalu <b>ketik sendiri nominal ${rupiah(p.price)}</b>, dan bayar sungguhan.</div>`
+        : `<div class="hint">QR ini berisi data simulasi demo, bukan kode pembayaran resmi bank/e-wallet.</div>`}
+      <button class="btn warm block" id="confirmPayBtn" style="margin-top:12px;">Saya sudah bayar${hasRealQris?"":" (simulasi)"}</button>
       <button class="btn ghost block" id="backMethodBtn" style="margin-top:8px;">← Ganti metode</button>`;
     document.getElementById("backMethodBtn").addEventListener("click", ()=>{ checkoutState.step="method"; renderCheckoutModal(); });
     document.getElementById("confirmPayBtn").addEventListener("click", ()=>finalizeOrder(p, checkoutState.method, orderId));
   }
 }
+function waLink(number, text){ return `https://wa.me/${number.replace(/[^0-9]/g,"")}?text=${encodeURIComponent(text)}`; }
 function finalizeOrder(p, method, orderId){
   const buyer = currentUser(); const seller = users.find(u=>u.id===p.sellerId);
-  orders.push({id:orderId,buyerId:buyer.id,sellerId:p.sellerId,productId:p.id,productName:p.name,unitPrice:p.price,total:p.price,method,status:"dibayar",createdAt:Date.now(),paidAt:Date.now()});
+  const order = {id:orderId,buyerId:buyer.id,sellerId:p.sellerId,productId:p.id,productName:p.name,unitPrice:p.price,total:p.price,method,status:"dibayar",createdAt:Date.now(),paidAt:Date.now()};
+  orders.push(order);
   const idx = products.findIndex(x=>x.id===p.id); if(idx>-1 && products[idx].stock>0) products[idx].stock -= 1;
+  if(method==="saldo") payWithWallet(buyer, seller, p.price, "Pembelian "+p.name);
+  tryAffiliateCommission(order, p);
   saveAll();
   notifyUser(buyer.id,"Pembayaran berhasil ✅",`Pembayaranmu untuk "${p.name}" sebesar ${rupiah(p.price)} via ${method.toUpperCase()} sudah dikonfirmasi.`,"payment");
   notifyUser(seller.id,"Pesanan baru masuk 🛒",`${buyer.name} baru saja membeli "${p.name}" senilai ${rupiah(p.price)}.`,"order");
   document.getElementById("checkoutOverlay").classList.add("hidden");
   toast("Pembayaran dikonfirmasi 🎉"); fireConfetti();
   renderAll();
+  if(seller.whatsapp){
+    setTimeout(()=>{
+      const msg = `Halo ${seller.name}, saya baru saja beli "${p.name}" (${rupiah(p.price)}) di NodeLink dengan order ID ${orderId}. Mohon diproses ya. Terima kasih!`;
+      if(confirm("Kirim konfirmasi pesanan ke penjual via WhatsApp?")) window.open(waLink(seller.whatsapp, msg), "_blank");
+    }, 400);
+  }
 }
 
 /* ============ toko saya ============ */
@@ -928,6 +1105,13 @@ function renderProfile(){
   const lvl = buyerLevel(u.id);
   document.getElementById("profileLevelBadge").innerHTML = `<span class="level-badge">${lvl.icon} Level ${lvl.label}</span>`;
   document.getElementById("profileVerifyBadge").innerHTML = u.verified?'<span class="badge-verified">✓ toko terverifikasi</span>':(u.verifyStatus==="pending"?'<span class="badge-pending">menunggu persetujuan</span>':"");
+
+  document.getElementById("myRefCode").textContent = u.refCode;
+  const totalAff = walletTx.filter(t=>t.userId===u.id && t.type==="affiliate_commission").reduce((s,t)=>s+t.amount,0);
+  document.getElementById("affiliateEarnings").textContent = "Total komisi affiliate terkumpul: " + rupiah(totalAff);
+  document.getElementById("waNumberInput").value = u.whatsapp || "";
+  document.getElementById("qrisUrlInput").value = u.qrisUrl || "";
+
   const area = document.getElementById("verifyArea");
   if(u.verified){ area.innerHTML = '<div class="empty" style="border-color:var(--success);color:var(--success);">Toko kamu sudah terverifikasi ✓</div>'; }
   else if(u.verifyStatus==="pending"){ area.innerHTML = '<div class="empty">Pengajuan sedang diperiksa admin.</div>'; }
@@ -940,6 +1124,105 @@ function renderProfile(){
   document.getElementById("emailCfgStatus").innerHTML = emailCfg.enabled
     ? '<span style="color:var(--success);">✓ Email asli aktif — notifikasi juga dikirim ke inbox kamu.</span>'
     : 'Belum aktif — notifikasi hanya muncul di dalam app.';
+}
+
+/* ============ referral & whatsapp profile actions ============ */
+document.getElementById("copyRefBtn").addEventListener("click", ()=>{
+  const u = currentUser(); if(!u) return;
+  const ta = document.createElement("textarea"); ta.value = u.refCode; document.body.appendChild(ta); ta.select();
+  try{ document.execCommand("copy"); toast("Kode affiliate disalin"); }catch(e){ toast("Gagal menyalin"); }
+  document.body.removeChild(ta);
+});
+document.getElementById("saveWaBtn").addEventListener("click", ()=>{
+  const u = currentUser(); if(!u) return;
+  const v = document.getElementById("waNumberInput").value.trim();
+  u.whatsapp = v; saveAll(); toast("Nomor WhatsApp disimpan"); renderAll();
+});
+document.getElementById("saveQrisBtn").addEventListener("click", ()=>{
+  const u = currentUser(); if(!u) return;
+  const v = document.getElementById("qrisUrlInput").value.trim();
+  u.qrisUrl = v; saveAll(); toast(v ? "QRIS asli disimpan — pembeli sekarang lihat QR asli kamu" : "QRIS dihapus, kembali ke QR simulasi"); renderAll();
+});
+
+/* ============ description generator ============ */
+const TRAITS = ["Cepat & responsif","Awet / tahan lama","100% original","Bergaransi resmi","Kualitas premium","Harga bersahabat","Stok selalu ready","Pengiriman cepat"];
+document.getElementById("genTraits").innerHTML = TRAITS.map((t,i)=>`<label style="display:flex;align-items:center;gap:5px;font-size:11.5px;background:var(--bg-panel);border:1px solid var(--border);border-radius:7px;padding:5px 9px;cursor:pointer;"><input type="checkbox" value="${escapeHtml(t)}" style="width:auto;">${escapeHtml(t)}</label>`).join("");
+document.getElementById("genDescBtn").addEventListener("click", ()=>{
+  const box = document.getElementById("descGenBox");
+  box.style.display = box.style.display==="none" ? "block" : "none";
+});
+document.getElementById("applyGenDescBtn").addEventListener("click", ()=>{
+  const name = document.getElementById("pName").value.trim() || "produk ini";
+  const tone = document.getElementById("genTone").value;
+  const traits = Array.from(document.querySelectorAll("#genTraits input:checked")).map(c=>c.value);
+  let text = "";
+  if(traits.length===0){ toast("Pilih minimal 1 kelebihan produk"); return; }
+  const traitList = traits.join(", ").toLowerCase();
+  if(tone==="santai") text = `${name} nih, cocok banget buat kamu yang cari barang ${traitList}. Udah banyak yang order, kualitas oke, gak bakal nyesel deh!`;
+  else if(tone==="profesional") text = `${name} merupakan pilihan tepat dengan keunggulan: ${traitList}. Diproses dengan standar kualitas terbaik untuk kepuasan pelanggan.`;
+  else text = `Jangan sampai kehabisan! ${name} hadir dengan ${traitList}. Buruan checkout sekarang sebelum stok habis — kualitas dijamin, kepuasan diutamakan!`;
+  document.getElementById("pDesc").value = text;
+  document.getElementById("descGenBox").style.display = "none";
+  toast("Deskripsi dibuat, silakan edit sesuai kebutuhan");
+});
+
+/* ============ wallet UI ============ */
+document.getElementById("walletOpenAuthBtn").addEventListener("click", ()=>authOverlay.classList.remove("hidden"));
+document.getElementById("topupBtn").addEventListener("click", ()=>{
+  const u = currentUser(); if(!u) return;
+  const amt = prompt("Isi saldo simulasi berapa (Rp)? cth: 100000");
+  const n = Number(amt);
+  if(!n || n<=0){ return; }
+  creditBalance(u.id, n);
+  addWalletTx(u.id, "topup", n, "-", "Isi saldo simulasi");
+  saveAll();
+  notifyUser(u.id, "Isi saldo berhasil 💳", `Saldomu bertambah ${rupiah(n)} (simulasi).`, "payment");
+  toast("Saldo bertambah "+rupiah(n));
+  renderAll();
+});
+document.getElementById("openTransferBtn").addEventListener("click", ()=>{
+  const p = document.getElementById("transferPanel");
+  p.style.display = p.style.display==="none" ? "block" : "none";
+});
+document.getElementById("submitTransferBtn").addEventListener("click", ()=>{
+  const u = currentUser(); if(!u) return;
+  const email = document.getElementById("transferEmail").value.trim().toLowerCase();
+  const amount = Number(document.getElementById("transferAmount").value);
+  const note = document.getElementById("transferNote").value.trim();
+  if(!email || !amount || amount<=0){ toast("Lengkapi email penerima & jumlah"); return; }
+  const recipient = users.find(x=>x.email.toLowerCase()===email);
+  if(!recipient){ toast("Email penerima tidak ditemukan"); return; }
+  if(recipient.id===u.id){ toast("Tidak bisa transfer ke diri sendiri"); return; }
+  if((u.balance||0) < amount){ toast("Saldo tidak cukup"); return; }
+  debitBalance(u.id, amount); creditBalance(recipient.id, amount);
+  addWalletTx(u.id, "transfer_out", amount, recipient.name, note);
+  addWalletTx(recipient.id, "transfer_in", amount, u.name, note);
+  saveAll();
+  notifyUser(recipient.id, "Transfer masuk 💰", `${u.name} mengirim ${rupiah(amount)} ke saldomu.${note?" Catatan: "+note:""}`, "payment");
+  toast("Transfer "+rupiah(amount)+" berhasil dikirim");
+  document.getElementById("transferEmail").value=""; document.getElementById("transferAmount").value=""; document.getElementById("transferNote").value="";
+  document.getElementById("transferPanel").style.display="none";
+  renderAll();
+});
+function renderWallet(){
+  const u = currentUser();
+  document.getElementById("walletLoggedOut").style.display = u?"none":"block";
+  document.getElementById("walletLoggedIn").style.display = u?"block":"none";
+  if(!u) return;
+  document.getElementById("walletBalance").textContent = rupiah(u.balance||0);
+  const mine = walletTx.filter(t=>t.userId===u.id).slice(0,30);
+  const list = document.getElementById("walletTxList");
+  if(mine.length===0){ list.innerHTML = '<div class="empty">Belum ada transaksi.</div>'; return; }
+  const iconMap = {topup:"➕",transfer_in:"⬇️",transfer_out:"⬆️",purchase:"🛒",sale:"💵",affiliate_commission:"🔗"};
+  const inTypes = ["topup","transfer_in","sale","affiliate_commission"];
+  list.innerHTML = mine.map(t=>{
+    const isIn = inTypes.includes(t.type);
+    const labelMap = {topup:"Isi saldo",transfer_in:"Transfer masuk",transfer_out:"Transfer keluar",purchase:"Pembelian",sale:"Penjualan",affiliate_commission:"Komisi affiliate"};
+    return `<div class="tx-item"><div class="ico">${iconMap[t.type]||"💳"}</div>
+      <div class="info"><div class="t">${labelMap[t.type]||t.type}${t.counterpart&&t.counterpart!=="-"?" · "+escapeHtml(t.counterpart):""}</div><div class="m">${t.note?escapeHtml(t.note)+" · ":""}${timeAgo(t.createdAt)}</div></div>
+      <div class="tx-amt ${isIn?'plus':'minus'}">${isIn?'+':'-'}${rupiah(t.amount)}</div>
+    </div>`;
+  }).join("");
 }
 
 /* ============ email settings UI ============ */
